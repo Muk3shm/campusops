@@ -1,0 +1,290 @@
+/* ============================================
+   Shared UI Component Styles
+   ============================================ */
+
+/* ─── Badges ─────────────────────────────── */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  line-height: 1.5;
+}
+
+/* Status badge variants */
+.statusOpen {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.statusAssigned {
+  background-color: var(--color-purple-light);
+  color: var(--color-purple);
+}
+
+.statusInProgress {
+  background-color: var(--color-warning-light);
+  color: #b45309;
+}
+
+.statusResolved {
+  background-color: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.statusClosed {
+  background-color: #f1f5f9;
+  color: var(--color-text-secondary);
+}
+
+/* Priority badge variants */
+.priorityLow {
+  background-color: #f1f5f9;
+  color: var(--color-text-secondary);
+}
+
+.priorityMedium {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.priorityHigh {
+  background-color: var(--color-orange-light);
+  color: var(--color-orange);
+}
+
+.priorityCritical {
+  background-color: var(--color-danger-light);
+  color: var(--color-danger);
+}
+
+/* ─── Stat Card ──────────────────────────── */
+
+.statCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  transition: box-shadow var(--transition);
+}
+
+.statCard:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.statCardIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius);
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+/* Color variants for stat card icons */
+.statCard_warning .statCardIcon {
+  background-color: var(--color-warning-light);
+  color: #b45309;
+}
+
+.statCard_success .statCardIcon {
+  background-color: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.statCard_danger .statCardIcon {
+  background-color: var(--color-danger-light);
+  color: var(--color-danger);
+}
+
+.statCard_purple .statCardIcon {
+  background-color: var(--color-purple-light);
+  color: var(--color-purple);
+}
+
+.statCardContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.statCardValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-text);
+}
+
+.statCardLabel {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+/* ─── Request Card ───────────────────────── */
+
+.requestCard {
+  display: block;
+  padding: var(--space-4);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow var(--transition), border-color var(--transition);
+}
+
+.requestCard:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary);
+  text-decoration: none;
+}
+
+.requestCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.requestCardId {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.requestCardBadges {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.requestCardTitle {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--space-3);
+  line-height: 1.4;
+}
+
+.requestCardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.requestCardMetaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+/* ─── Data Table ─────────────────────────── */
+
+.tableWrapper {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background-color: var(--color-card);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.table th {
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background-color: var(--color-bg);
+}
+
+.tableRowClickable {
+  cursor: pointer;
+}
+
+.tableEmpty {
+  text-align: center;
+  padding: var(--space-10) var(--space-4) !important;
+  color: var(--color-text-secondary);
+}
+
+/* ─── Loading Spinner ────────────────────── */
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12);
+  gap: var(--space-4);
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingMessage {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+/* ─── Error Message ──────────────────────── */
+
+.errorContainer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background-color: var(--color-danger-light);
+  color: var(--color-danger);
+  border: 1px solid #fca5a5;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+}
