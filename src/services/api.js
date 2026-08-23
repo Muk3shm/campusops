@@ -322,7 +322,9 @@ export async function assignTechnicianToRequest(
 ) {
     try {
         const body = {
-            assignedTo: techId
+            assignedTo: techId,
+            assigneeName: techName,
+            status: 'ASSIGNED'
         };
 
         const response = await fetch(
