@@ -5,12 +5,11 @@
  * Manages requests, knowledge base articles, sessions, and feedback in localStorage.
  */
 
-import { mockRequests } from '@/data/mockRequests';
 import { mockUsers, mockTechnicians, mockAdmins, defaultMockAccounts } from '@/data/mockUsers';
 import { mockArticles } from '@/data/mockKnowledgeBase';
 
 const SESSION_KEY = 'campusops_mock_session';
-const REQUESTS_KEY = 'campusops_requests';
+
 const KNOWLEDGE_KEY = 'campusops_knowledge';
 const FEEDBACK_KEY = 'campusops_knowledge_feedback';
 
@@ -19,35 +18,6 @@ export const MIN_RELEVANCE_THRESHOLD = 3;
 const delay = (ms = 150) => new Promise(resolve => setTimeout(resolve, ms));
 const API_URL = import.meta.env.VITE_API_URL;
 // ─── localStorage Helpers: Requests ─────────────────────────────
-
-function getStoredRequests() {
-  try {
-    const raw = localStorage.getItem(REQUESTS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
-      }
-    }
-  } catch (e) {
-    console.error('Failed to read requests from localStorage:', e);
-  }
-
-  try {
-    localStorage.setItem(REQUESTS_KEY, JSON.stringify(mockRequests));
-  } catch (e) {
-    console.error('Failed to seed requests to localStorage:', e);
-  }
-  return [...mockRequests];
-}
-
-function saveStoredRequests(requests) {
-  try {
-    localStorage.setItem(REQUESTS_KEY, JSON.stringify(requests));
-  } catch (e) {
-    console.error('Failed to save requests to localStorage:', e);
-  }
-}
 
 // ─── localStorage Helpers: Knowledge Base ─────────────────────────
 
