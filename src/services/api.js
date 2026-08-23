@@ -213,33 +213,69 @@ export async function getServiceRequestById(id) {
     }
 }
 export async function createServiceRequest(data, currentUser) {
-  await delay(200);
-  const allRequests = getStoredRequests();
+    try {
+        const requestData = {
+            ...data,
+            reportedBy:
+                currentUser?.email ||
+                'rahul@campus.edu'
+        };
 
-  const existingNums = allRequests
-    .map(r => parseInt(String(r.id).replace('SR-', ''), 10))
-    .filter(num => !isNaN(num));
-  const nextNum = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1;
-  const newId = `SR-${String(nextNum).padStart(3, '0')}`;
+        const response = await fetch(`${API_URL}/requests`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        });
 
-  const newRequest = {
-    id: newId,
-    ...data,
-    status: 'OPEN',
-    assignedTo: null,
-    assigneeName: null,
-    reportedBy: currentUser?.email || 'rahul@campus.edu',
-    reporterName: currentUser?.name || 'Rahul Sharma',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    resolvedAt: null,
-    resolutionNotes: null,
-  };
+        if (!response.ok) {
+            let errorMessage = `Failed to create service request: ${response.status}`;
 
-  const updatedRequests = [newRequest, ...allRequests];
-  saveStoredRequests(updatedRequests);
+            try {
+                const errorData = await response.json();
 
-  return newRequest;
+                if (errorData?.message) {
+                    errorMessage = errorData.message;
+                }
+            } catch {
+                // Ignore JSON parsing error
+            }
+
+            throw new Error(errorMessage);
+        }
+
+        const result = await response.json();
+
+        if (!result.request) {
+            throw new Error('Invalid response from AWS API');
+        }
+
+        const request = result.request;
+
+        return {
+            ...request,
+            id: request.requestId,
+            reporterName:
+                request.reporterName ||
+                currentUser?.name ||
+                'Rahul Sharma',
+            assigneeName:
+                request.assigneeName ||
+                null,
+            resolvedAt:
+                request.resolvedAt ||
+                null
+        };
+
+    } catch (error) {
+        console.error(
+            'Failed to create service request through AWS:',
+            error
+        );
+
+        throw error;
+    }
 }
 
 export async function updateServiceRequestStatus(id, newStatus, resolutionNotes) {
