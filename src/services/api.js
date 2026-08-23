@@ -410,6 +410,56 @@ export async function assignTechnicianToRequest(
     }
 }
 
+export async function deleteServiceRequest(requestId) {
+    try {
+        const response = await fetch(
+            `${API_URL}/requests/${encodeURIComponent(requestId)}`,
+            {
+                method: 'DELETE'
+            }
+        );
+
+        if (response.status === 404) {
+            throw new Error('Request not found');
+        }
+
+        if (!response.ok) {
+            let errorMessage =
+                `Failed to delete service request: ${response.status}`;
+
+            try {
+                const errorData = await response.json();
+
+                if (errorData?.message) {
+                    errorMessage = errorData.message;
+                }
+            } catch {
+                // Ignore JSON parsing error
+            }
+
+            throw new Error(errorMessage);
+        }
+
+        const result = await response.json();
+
+        return {
+            success: true,
+            requestId:
+                result.requestId || requestId,
+            message:
+                result.message ||
+                'Service request deleted successfully'
+        };
+
+    } catch (error) {
+        console.error(
+            'Failed to delete service request through AWS:',
+            error
+        );
+
+        throw error;
+    }
+}
 // ─── Users & Technicians ──────────────────────────────────────
 
 export async function getTechnicians() {
