@@ -278,52 +278,136 @@ export async function createServiceRequest(data, currentUser) {
     }
 }
 
-export async function updateServiceRequestStatus(id, newStatus, resolutionNotes) {
-  await delay(150);
-  const allRequests = getStoredRequests();
-  const index = allRequests.findIndex(r => r.id === id);
+export async function updateServiceRequestStatus(
+    id,
+    newStatus,
+    resolutionNotes
+) {
+    try {
+        const body = {
+            status: newStatus
+        };
 
-  if (index === -1) throw new Error('Request not found');
+        if (resolutionNotes) {
+            body.resolutionNotes = resolutionNotes;
+        }
 
-  const updated = {
-    ...allRequests[index],
-    status: newStatus,
-    updatedAt: new Date().toISOString(),
-  };
+        const response = await fetch(
+            `${API_URL}/requests/${encodeURIComponent(id)}`,
+            {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            }
+        );
 
-  if (resolutionNotes) {
-    updated.resolutionNotes = resolutionNotes;
-  }
+        if (response.status === 404) {
+            throw new Error('Request not found');
+        }
 
-  if (newStatus === 'RESOLVED' || newStatus === 'CLOSED') {
-    updated.resolvedAt = new Date().toISOString();
-  }
+        if (!response.ok) {
+            let errorMessage =
+                `Failed to update service request: ${response.status}`;
 
-  allRequests[index] = updated;
-  saveStoredRequests(allRequests);
+            try {
+                const errorData = await response.json();
 
-  return { ...updated };
+                if (errorData?.message) {
+                    errorMessage = errorData.message;
+                }
+            } catch {
+                // Ignore JSON parsing error
+            }
+
+            throw new Error(errorMessage);
+        }
+
+        const result = await response.json();
+
+        if (!result.request) {
+            throw new Error('Invalid response from AWS API');
+        }
+
+        return {
+            ...result.request,
+            id: result.request.requestId
+        };
+
+    } catch (error) {
+        console.error(
+            'Failed to update service request through AWS:',
+            error
+        );
+
+        throw error;
+    }
 }
 
-export async function assignTechnicianToRequest(requestId, techId, techName) {
-  await delay(150);
-  const allRequests = getStoredRequests();
-  const index = allRequests.findIndex(r => r.id === requestId);
+export async function assignTechnicianToRequest(
+    requestId,
+    techId,
+    techName
+) {
+    try {
+        const body = {
+            assignedTo: techId
+        };
 
-  if (index === -1) throw new Error('Request not found');
+        const response = await fetch(
+            `${API_URL}/requests/${encodeURIComponent(requestId)}`,
+            {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            }
+        );
 
-  const updated = {
-    ...allRequests[index],
-    assignedTo: techId,
-    assigneeName: techName,
-    status: allRequests[index].status === 'OPEN' ? 'ASSIGNED' : allRequests[index].status,
-    updatedAt: new Date().toISOString(),
-  };
+        if (response.status === 404) {
+            throw new Error('Request not found');
+        }
 
-  allRequests[index] = updated;
-  saveStoredRequests(allRequests);
+        if (!response.ok) {
+            let errorMessage =
+                `Failed to assign technician: ${response.status}`;
 
-  return { ...updated };
+            try {
+                const errorData = await response.json();
+
+                if (errorData?.message) {
+                    errorMessage = errorData.message;
+                }
+            } catch {
+                // Ignore JSON parsing error
+            }
+
+            throw new Error(errorMessage);
+        }
+
+        const result = await response.json();
+
+        if (!result.request) {
+            throw new Error('Invalid response from AWS API');
+        }
+
+        return {
+            ...result.request,
+            id: result.request.requestId,
+            assigneeName:
+                result.request.assigneeName || techName || null
+        };
+
+    } catch (error) {
+        console.error(
+            'Failed to assign technician through AWS:',
+            error
+        );
+
+        throw error;
+    }
 }
 
 // ─── Users & Technicians ──────────────────────────────────────
