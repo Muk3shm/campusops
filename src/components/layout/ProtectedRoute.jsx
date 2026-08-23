@@ -22,7 +22,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     // Redirect unauthorized user to their role home page
-    if (user.role === 'STUDENT') {
+    if (user.role === 'STUDENT' || user.role === 'STAFF') {
       return <Navigate to="/dashboard" replace />;
     } else if (user.role === 'TECHNICIAN') {
       return <Navigate to="/technician" replace />;

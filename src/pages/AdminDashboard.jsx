@@ -12,6 +12,7 @@ import {
   UserCheck,
   BookOpen,
   FileCheck,
+  Trash2,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import StatCard from '@/components/ui/StatCard';
@@ -25,6 +26,7 @@ import {
   getServiceRequests,
   getTechnicians,
   assignTechnicianToRequest,
+  deleteServiceRequest,
 } from '@/services/api';
 import styles from './AdminDashboard.module.css';
 
@@ -94,6 +96,21 @@ export default function AdminDashboard() {
     }
   }
 
+  async function handleDeleteRequest(req, e) {
+    e.stopPropagation();
+    const confirmed = window.confirm(
+      `Are you sure you want to delete request ${req.id}?\n\nThis action cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteServiceRequest(req.id);
+      await loadAdminData();
+    } catch (err) {
+      alert('Failed to delete request: ' + err.message);
+    }
+  }
+
   const requestColumns = [
     { key: 'id', label: 'ID' },
     { key: 'title', label: 'Title' },
@@ -115,16 +132,26 @@ export default function AdminDashboard() {
     },
     {
       key: 'actions',
-      label: 'Assign Control',
+      label: 'Actions',
       render: (_, row) => (
-        <button
-          className="btn btn-secondary"
-          style={{ padding: '4px 8px', fontSize: '0.75rem' }}
-          onClick={(e) => handleOpenAssignModal(row, e)}
-        >
-          <UserPlus size={12} />
-          {row.assignedTo ? 'Reassign' : 'Assign'}
-        </button>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          <button
+            className="btn btn-secondary"
+            style={{ padding: '4px 8px', fontSize: '0.75rem', gap: '4px' }}
+            onClick={(e) => handleOpenAssignModal(row, e)}
+          >
+            <UserPlus size={12} />
+            {row.assignedTo ? 'Reassign' : 'Assign'}
+          </button>
+          <button
+            className="btn btn-danger"
+            style={{ padding: '4px 8px', fontSize: '0.75rem', gap: '4px' }}
+            onClick={(e) => handleDeleteRequest(row, e)}
+          >
+            <Trash2 size={12} />
+            Delete
+          </button>
+        </div>
       ),
     },
   ];

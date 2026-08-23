@@ -248,6 +248,67 @@ export async function createServiceRequest(data, currentUser) {
     }
 }
 
+export async function updateServiceRequest(requestId, data) {
+    try {
+        const body = {};
+        if (data.title !== undefined) body.title = data.title;
+        if (data.category !== undefined) body.category = data.category;
+        if (data.description !== undefined) body.description = data.description;
+        if (data.location !== undefined) body.location = data.location;
+        if (data.priority !== undefined) body.priority = data.priority;
+
+        const response = await fetch(
+            `${API_URL}/requests/${encodeURIComponent(requestId)}`,
+            {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            }
+        );
+
+        if (response.status === 404) {
+            throw new Error('Request not found');
+        }
+
+        if (!response.ok) {
+            let errorMessage = `Failed to update service request: ${response.status}`;
+
+            try {
+                const errorData = await response.json();
+
+                if (errorData?.message) {
+                    errorMessage = errorData.message;
+                }
+            } catch {
+                // Ignore JSON parsing error
+            }
+
+            throw new Error(errorMessage);
+        }
+
+        const result = await response.json();
+
+        if (!result.request) {
+            throw new Error('Invalid response from AWS API');
+        }
+
+        return {
+            ...result.request,
+            id: result.request.requestId
+        };
+
+    } catch (error) {
+        console.error(
+            'Failed to update service request through AWS:',
+            error
+        );
+
+        throw error;
+    }
+}
+
 export async function updateServiceRequestStatus(
     id,
     newStatus,

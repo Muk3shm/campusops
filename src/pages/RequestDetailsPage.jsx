@@ -8,12 +8,14 @@ import {
   Tag,
   MessageSquare,
   FileText,
+  Edit3,
 } from 'lucide-react';
 import StatusBadge from '@/components/ui/StatusBadge';
 import PriorityBadge from '@/components/ui/PriorityBadge';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import SuggestSolutionModal from '@/components/ui/SuggestSolutionModal';
+import EditRequestModal from '@/components/ui/EditRequestModal';
 import { useAuth } from '@/context/AuthContext';
 import { getServiceRequestById, submitKnowledgeArticleForReview } from '@/services/api';
 import styles from './RequestDetailsPage.module.css';
@@ -30,6 +32,7 @@ export default function RequestDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isDocModalOpen, setIsDocModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadRequest() {
@@ -73,6 +76,9 @@ export default function RequestDetailsPage() {
 
   const isResolved = request.status === 'RESOLVED' || request.status === 'CLOSED';
   const canDocument = isResolved && (user?.role === 'TECHNICIAN' || user?.role === 'ADMIN');
+  const isStudentOrStaff = user?.role === 'STUDENT' || user?.role === 'STAFF';
+  const isOwner = request.reportedBy === user?.email;
+  const canEdit = isStudentOrStaff && isOwner && request.status === 'OPEN';
 
   return (
     <div className={styles.page}>
@@ -85,6 +91,16 @@ export default function RequestDetailsPage() {
         <div className={styles.headerTop}>
           <span className={styles.requestId}>{request.id}</span>
           <div className={styles.badges}>
+            {canEdit && (
+              <button
+                className="btn btn-secondary"
+                style={{ padding: '4px 10px', fontSize: '0.8125rem', gap: '6px' }}
+                onClick={() => setIsEditModalOpen(true)}
+              >
+                <Edit3 size={14} />
+                Edit Request
+              </button>
+            )}
             <PriorityBadge priority={request.priority} />
             <StatusBadge status={request.status} />
           </div>
@@ -199,6 +215,16 @@ export default function RequestDetailsPage() {
             steps: request.resolutionNotes ? [request.resolutionNotes] : [''],
             relatedRequestId: request.id,
           }}
+        />
+      )}
+
+      {/* Edit Request Modal */}
+      {isEditModalOpen && (
+        <EditRequestModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          request={request}
+          onSuccess={(updated) => setRequest(updated)}
         />
       )}
     </div>

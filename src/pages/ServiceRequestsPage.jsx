@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router';
-import { PlusCircle, Filter } from 'lucide-react';
+import { PlusCircle, Filter, Edit3 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import DataTable from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
 import PriorityBadge from '@/components/ui/PriorityBadge';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ErrorMessage from '@/components/ui/ErrorMessage';
+import EditRequestModal from '@/components/ui/EditRequestModal';
 import { getServiceRequests } from '@/services/api';
 import { REQUEST_STATUSES, REQUEST_PRIORITIES } from '@/data/mockRequests';
 import styles from './ServiceRequestsPage.module.css';
@@ -27,6 +28,7 @@ export default function ServiceRequestsPage() {
   const [error, setError] = useState(null);
   const [statusFilter, setStatusFilter] = useState(initialStatusFilter);
   const [priorityFilter, setPriorityFilter] = useState('ALL');
+  const [editingRequest, setEditingRequest] = useState(null);
 
   useEffect(() => {
     async function loadRequests() {
@@ -88,10 +90,37 @@ export default function ServiceRequestsPage() {
           month: 'short',
         }),
     },
+    ...((user?.role === 'STUDENT' || user?.role === 'STAFF')
+      ? [
+          {
+            key: 'actions',
+            label: 'Actions',
+            render: (_, row) => {
+              const isOwner = row.reportedBy === user?.email;
+              const canEdit = isOwner && row.status === 'OPEN';
+              if (!canEdit) return null;
+              return (
+                <button
+                  className="btn btn-secondary"
+                  style={{ padding: '4px 8px', fontSize: '0.75rem', gap: '4px' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingRequest(row);
+                  }}
+                >
+                  <Edit3 size={12} />
+                  Edit
+                </button>
+              );
+            },
+          },
+        ]
+      : []),
   ];
 
   const getPageHeading = () => {
     if (user?.role === 'STUDENT') return 'My Service Requests';
+    if (user?.role === 'STAFF') return 'My Service Requests';
     if (user?.role === 'TECHNICIAN') return 'My Assigned Requests';
     return 'All Campus Service Requests';
   };
@@ -149,6 +178,18 @@ export default function ServiceRequestsPage() {
         data={filteredRequests}
         onRowClick={(row) => navigate(`/requests/${row.id}`)}
       />
+
+      {/* Edit Request Modal */}
+      {editingRequest && (
+        <EditRequestModal
+          isOpen={Boolean(editingRequest)}
+          onClose={() => setEditingRequest(null)}
+          request={editingRequest}
+          onSuccess={() => {
+            getServiceRequests(user).then(setRequests).catch(console.error);
+          }}
+        />
+      )}
     </div>
   );
 }

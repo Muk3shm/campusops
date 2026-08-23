@@ -39,11 +39,11 @@ const router = createBrowserRouter([
       // and authenticated users to Student Dashboard by default.
       { index: true, element: <Navigate to="/dashboard" replace /> },
 
-      // Student Dashboard
+      // Student / Staff Dashboard
       {
         path: 'dashboard',
         element: (
-          <ProtectedRoute allowedRoles={['STUDENT']}>
+          <ProtectedRoute allowedRoles={['STUDENT', 'STAFF']}>
             <StudentDashboard />
           </ProtectedRoute>
         ),
@@ -53,7 +53,7 @@ const router = createBrowserRouter([
       {
         path: 'requests',
         element: (
-          <ProtectedRoute allowedRoles={['STUDENT', 'TECHNICIAN', 'ADMIN']}>
+          <ProtectedRoute allowedRoles={['STUDENT', 'STAFF', 'TECHNICIAN', 'ADMIN']}>
             <ServiceRequestsPage />
           </ProtectedRoute>
         ),
@@ -61,7 +61,7 @@ const router = createBrowserRouter([
       {
         path: 'requests/new',
         element: (
-          <ProtectedRoute allowedRoles={['STUDENT', 'ADMIN']}>
+          <ProtectedRoute allowedRoles={['STUDENT', 'STAFF', 'ADMIN']}>
             <CreateRequestPage />
           </ProtectedRoute>
         ),
@@ -69,7 +69,7 @@ const router = createBrowserRouter([
       {
         path: 'requests/:id',
         element: (
-          <ProtectedRoute allowedRoles={['STUDENT', 'TECHNICIAN', 'ADMIN']}>
+          <ProtectedRoute allowedRoles={['STUDENT', 'STAFF', 'TECHNICIAN', 'ADMIN']}>
             <RequestDetailsPage />
           </ProtectedRoute>
         ),
@@ -79,7 +79,7 @@ const router = createBrowserRouter([
       {
         path: 'knowledge-base',
         element: (
-          <ProtectedRoute allowedRoles={['STUDENT', 'TECHNICIAN', 'ADMIN']}>
+          <ProtectedRoute allowedRoles={['STUDENT', 'STAFF', 'TECHNICIAN', 'ADMIN']}>
             <KnowledgeBasePage />
           </ProtectedRoute>
         ),

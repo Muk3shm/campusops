@@ -10,6 +10,7 @@ import {
   X,
   Save,
   FileText,
+  Trash2,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import StatCard from '@/components/ui/StatCard';
@@ -23,6 +24,7 @@ import {
   getServiceRequests,
   updateServiceRequestStatus,
   submitKnowledgeArticleForReview,
+  deleteServiceRequest,
 } from '@/services/api';
 import { REQUEST_STATUSES } from '@/data/mockRequests';
 import styles from './TechnicianDashboard.module.css';
@@ -98,6 +100,21 @@ export default function TechnicianDashboard() {
     setDocTargetRequest(null);
   }
 
+  async function handleDeleteRequest(req, e) {
+    if (e) e.stopPropagation();
+    const confirmed = window.confirm(
+      `Are you sure you want to delete request ${req.id}?\n\nThis action cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteServiceRequest(req.id);
+      await loadData();
+    } catch (err) {
+      alert('Failed to delete request: ' + err.message);
+    }
+  }
+
   const assignedToMe = requests.length;
   const openAssigned = requests.filter(r => r.status === 'ASSIGNED' || r.status === 'OPEN').length;
   const inProgress = requests.filter(r => r.status === 'IN_PROGRESS').length;
@@ -152,6 +169,17 @@ export default function TechnicianDashboard() {
             >
               <FileText size={12} />
               Document Solution
+            </button>
+          )}
+
+          {user?.role === 'TECHNICIAN' && (
+            <button
+              className="btn btn-danger"
+              style={{ padding: '4px 8px', fontSize: '0.75rem', gap: '4px' }}
+              onClick={(e) => handleDeleteRequest(row, e)}
+            >
+              <Trash2 size={12} />
+              Delete
             </button>
           )}
         </div>
