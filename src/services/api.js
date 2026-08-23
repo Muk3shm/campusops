@@ -17,7 +17,7 @@ const FEEDBACK_KEY = 'campusops_knowledge_feedback';
 export const MIN_RELEVANCE_THRESHOLD = 3;
 
 const delay = (ms = 150) => new Promise(resolve => setTimeout(resolve, ms));
-
+const API_URL = import.meta.env.VITE_API_URL;
 // ─── localStorage Helpers: Requests ─────────────────────────────
 
 function getStoredRequests() {
@@ -143,28 +143,75 @@ export async function logoutMock() {
 // ─── Service Requests (Persistent) ────────────────────────────
 
 export async function getServiceRequests(user) {
-  await delay(100);
-  const allRequests = getStoredRequests();
+    try {
+        const response = await fetch(`${API_URL}/requests`);
 
-  if (!user) return allRequests;
+        if (!response.ok) {
+            throw new Error(`Failed to fetch service requests: ${response.status}`);
+        }
 
-  if (user.role === 'STUDENT') {
-    return allRequests.filter(r => r.reportedBy === user.email);
-  } else if (user.role === 'TECHNICIAN') {
-    return allRequests.filter(r => r.assignedTo === user.id || r.assignedTo === user.email);
-  }
+        const data = await response.json();
 
-  return allRequests;
+        const requests = (data.requests || []).map(request => ({
+            ...request,
+            id: request.requestId
+        }));
+
+        if (!user) return requests;
+
+        if (user.role === 'STUDENT') {
+            return requests.filter(request => request.reportedBy === user.email);
+        }
+
+        if (user.role === 'TECHNICIAN') {
+            return requests.filter(
+                request =>
+                    request.assignedTo === user.id ||
+                    request.assignedTo === user.email
+            );
+        }
+
+        return requests;
+    } catch (error) {
+        console.error('Failed to fetch service requests from AWS:', error);
+        throw error;
+    }
 }
 
 export async function getServiceRequestById(id) {
-  await delay(100);
-  const allRequests = getStoredRequests();
-  const request = allRequests.find(r => r.id === id);
-  if (!request) return null;
-  return { ...request };
-}
+    try {
+        const response = await fetch(
+            `${API_URL}/requests/${encodeURIComponent(id)}`
+        );
 
+        if (response.status === 404) {
+            return null;
+        }
+
+        if (!response.ok) {
+            throw new Error(
+                `Failed to fetch service request: ${response.status}`
+            );
+        }
+
+        const data = await response.json();
+
+        if (!data.request) {
+            return null;
+        }
+
+        return {
+            ...data.request,
+            id: data.request.requestId
+        };
+    } catch (error) {
+        console.error(
+            'Failed to fetch service request from AWS:',
+            error
+        );
+        throw error;
+    }
+}
 export async function createServiceRequest(data, currentUser) {
   await delay(200);
   const allRequests = getStoredRequests();
