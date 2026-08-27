@@ -152,14 +152,23 @@ export async function getServiceRequests(user) {
         if (!user) return requests;
 
         if (user.role === 'STUDENT') {
-            return requests.filter(request => request.reportedBy === user.email);
+            const userSub = user.sub || user.id;
+            return requests.filter(
+                request =>
+                    (user.email && request.reportedBy === user.email) ||
+                    (userSub && request.reporterSub && request.reporterSub === userSub) ||
+                    (user.id && request.reportedBy === user.id)
+            );
         }
 
         if (user.role === 'TECHNICIAN') {
+            const userSub = user.sub || user.id;
             return requests.filter(
                 request =>
-                    request.assignedTo === user.id ||
-                    request.assignedTo === user.email
+                    (userSub && request.assignedToSub && request.assignedToSub === userSub) ||
+                    (userSub && request.assignedTo && request.assignedTo === userSub) ||
+                    (user.email && request.assignedTo && request.assignedTo === user.email) ||
+                    (user.id && request.assignedTo && request.assignedTo === user.id)
             );
         }
 
@@ -413,7 +422,8 @@ export async function updateServiceRequestStatus(
 export async function assignTechnicianToRequest(
     requestId,
     techId,
-    techName
+    techName,
+    techSub
 ) {
     try {
         const body = {
@@ -421,6 +431,10 @@ export async function assignTechnicianToRequest(
             assigneeName: techName,
             status: 'ASSIGNED'
         };
+
+        if (techSub) {
+            body.assignedToSub = techSub;
+        }
 
         const authHeaders = await getAuthHeaders();
         const response = await fetch(

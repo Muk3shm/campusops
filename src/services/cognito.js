@@ -40,9 +40,11 @@ export function buildUserFromSession(cognitoUser, session) {
   const email = idTokenPayload.email || cognitoUser.getUsername();
   const name = idTokenPayload.name || (email ? email.split('@')[0] : 'Campus User');
   const id = idTokenPayload.sub || cognitoUser.getUsername();
+  const sub = idTokenPayload.sub || id;
 
   return {
     id,
+    sub,
     email,
     name,
     role,

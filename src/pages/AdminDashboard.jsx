@@ -86,7 +86,12 @@ export default function AdminDashboard() {
 
     try {
       setAssigning(true);
-      await assignTechnicianToRequest(assignTarget.id, techObj.id, techObj.name);
+      await assignTechnicianToRequest(
+        assignTarget.id,
+        techObj.id,
+        techObj.name,
+        techObj.sub
+      );
       setAssignTarget(null);
       await loadAdminData();
     } catch (err) {

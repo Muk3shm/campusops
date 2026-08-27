@@ -30,6 +30,7 @@ export const mockUsers = [
 export const mockTechnicians = [
   {
     id: 'USR-101',
+    sub: 'b1b38dca-0071-709d-eb4c-38f13946761c',
     name: 'Arun Prasad',
     email: 'arun@campus.edu',
     role: 'TECHNICIAN',
@@ -38,6 +39,7 @@ export const mockTechnicians = [
   },
   {
     id: 'USR-102',
+    sub: 'd1f3bd9a-0081-7071-71ea-452242c2b255',
     name: 'Vikram Singh',
     email: 'vikram@campus.edu',
     role: 'TECHNICIAN',
@@ -46,6 +48,7 @@ export const mockTechnicians = [
   },
   {
     id: 'USR-103',
+    sub: '71133dca-1091-70f1-694a-079221009bd3',
     name: 'Rajesh Nair',
     email: 'rajesh@campus.edu',
     role: 'TECHNICIAN',
