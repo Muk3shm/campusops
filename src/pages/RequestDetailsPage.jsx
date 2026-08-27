@@ -9,6 +9,8 @@ import {
   MessageSquare,
   FileText,
   Edit3,
+  X,
+  Save,
 } from 'lucide-react';
 import StatusBadge from '@/components/ui/StatusBadge';
 import PriorityBadge from '@/components/ui/PriorityBadge';
@@ -17,7 +19,8 @@ import ErrorMessage from '@/components/ui/ErrorMessage';
 import SuggestSolutionModal from '@/components/ui/SuggestSolutionModal';
 import EditRequestModal from '@/components/ui/EditRequestModal';
 import { useAuth } from '@/context/AuthContext';
-import { getServiceRequestById, submitKnowledgeArticleForReview } from '@/services/api';
+import { getServiceRequestById, submitKnowledgeArticleForReview, updateServiceRequestStatus } from '@/services/api';
+import { REQUEST_STATUSES } from '@/data/mockRequests';
 import styles from './RequestDetailsPage.module.css';
 
 /**
@@ -33,6 +36,10 @@ export default function RequestDetailsPage() {
   const [error, setError] = useState(null);
   const [isDocModalOpen, setIsDocModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [newStatus, setNewStatus] = useState('');
+  const [resolutionNotes, setResolutionNotes] = useState('');
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   useEffect(() => {
     async function loadRequest() {
@@ -59,6 +66,21 @@ export default function RequestDetailsPage() {
     setIsDocModalOpen(false);
   }
 
+  async function handleStatusUpdateSubmit(e) {
+    e.preventDefault();
+    if (!request) return;
+    try {
+      setUpdatingStatus(true);
+      const updated = await updateServiceRequestStatus(request.id, newStatus, resolutionNotes);
+      setRequest(updated);
+      setIsStatusModalOpen(false);
+    } catch (err) {
+      alert('Failed to update status: ' + err.message);
+    } finally {
+      setUpdatingStatus(false);
+    }
+  }
+
   if (loading) return <LoadingSpinner message="Loading request details..." />;
   if (error) return <ErrorMessage message={error} />;
   if (!request) return <ErrorMessage message="Request not found" />;
@@ -74,11 +96,45 @@ export default function RequestDetailsPage() {
     });
   };
 
-  const isResolved = request.status === 'RESOLVED' || request.status === 'CLOSED';
-  const canDocument = isResolved && (user?.role === 'TECHNICIAN' || user?.role === 'ADMIN');
+  const isAdmin = user?.role === 'ADMIN';
   const isStudentOrStaff = user?.role === 'STUDENT' || user?.role === 'STAFF';
-  const isOwner = request.reportedBy === user?.email;
-  const canEdit = isStudentOrStaff && isOwner && request.status === 'OPEN';
+  const isTechnician = user?.role === 'TECHNICIAN';
+
+  const userSub = user?.sub || user?.id;
+  const userEmail = user?.email;
+  const userId = user?.id;
+
+  const isOwner = Boolean(
+    (userEmail && request.reportedBy === userEmail) ||
+    (userId && request.reportedBy === userId) ||
+    (userSub && request.reportedBy === userSub) ||
+    (userSub && request.reporterSub === userSub)
+  );
+
+  const isAssignedTechnician = Boolean(
+    (userSub && request.assignedToSub === userSub) ||
+    (userSub && request.assignedTo === userSub) ||
+    (userEmail && request.assignedTo === userEmail) ||
+    (userId && request.assignedTo === userId)
+  );
+
+  const canEditContent =
+    isAdmin ||
+    (
+      isStudentOrStaff &&
+      isOwner &&
+      request.status === 'OPEN'
+    );
+
+  const canUpdateStatus =
+    isAdmin ||
+    (
+      isTechnician &&
+      isAssignedTechnician
+    );
+
+  const isResolved = request.status === 'RESOLVED' || request.status === 'CLOSED';
+  const canDocument = isResolved && (isTechnician || isAdmin);
 
   return (
     <div className={styles.page}>
@@ -91,7 +147,7 @@ export default function RequestDetailsPage() {
         <div className={styles.headerTop}>
           <span className={styles.requestId}>{request.id}</span>
           <div className={styles.badges}>
-            {canEdit && (
+            {canEditContent && (
               <button
                 className="btn btn-secondary"
                 style={{ padding: '4px 10px', fontSize: '0.8125rem', gap: '6px' }}
@@ -99,6 +155,20 @@ export default function RequestDetailsPage() {
               >
                 <Edit3 size={14} />
                 Edit Request
+              </button>
+            )}
+            {canUpdateStatus && (
+              <button
+                className="btn btn-secondary"
+                style={{ padding: '4px 10px', fontSize: '0.8125rem', gap: '6px' }}
+                onClick={() => {
+                  setNewStatus(request.status);
+                  setResolutionNotes(request.resolutionNotes || '');
+                  setIsStatusModalOpen(true);
+                }}
+              >
+                <Edit3 size={14} />
+                Update Status
               </button>
             )}
             <PriorityBadge priority={request.priority} />
@@ -132,7 +202,7 @@ export default function RequestDetailsPage() {
               <User size={16} />
               <div>
                 <span className={styles.detailLabel}>Reported By</span>
-                <span className={styles.detailValue}>{request.reporterName}</span>
+                <span className={styles.detailValue}>{request.reporterName || request.reportedBy}</span>
               </div>
             </div>
             {request.assigneeName && (
@@ -227,6 +297,114 @@ export default function RequestDetailsPage() {
           onSuccess={(updated) => setRequest(updated)}
         />
       )}
+
+      {/* Update Status Modal for Technician & Admin */}
+      {isStatusModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 300,
+            padding: '16px',
+          }}
+          onClick={() => setIsStatusModalOpen(false)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '520px',
+              backgroundColor: 'var(--color-card)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-lg)',
+              padding: '24px',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '12px',
+                paddingBottom: '12px',
+                borderBottom: '1px solid var(--color-border)',
+              }}
+            >
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--color-text)' }}>
+                Update Work Order: {request.id}
+              </h3>
+              <button
+                style={{ border: 'none', background: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer' }}
+                onClick={() => setIsStatusModalOpen(false)}
+                aria-label="Close modal"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleStatusUpdateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>
+                <strong>{request.title}</strong> — {request.location}
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label htmlFor="modalStatus" style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--color-text)' }}>
+                  Workflow Status
+                </label>
+                <select
+                  id="modalStatus"
+                  className="input"
+                  value={newStatus}
+                  onChange={(e) => setNewStatus(e.target.value)}
+                >
+                  {REQUEST_STATUSES.map((st) => (
+                    <option key={st} value={st}>
+                      {st.replace('_', ' ')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label htmlFor="modalNotes" style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--color-text)' }}>
+                  Resolution / Progress Notes
+                </label>
+                <textarea
+                  id="modalNotes"
+                  className="input"
+                  rows={4}
+                  placeholder="Describe work performed or resolution details..."
+                  value={resolutionNotes}
+                  onChange={(e) => setResolutionNotes(e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setIsStatusModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={updatingStatus}
+                >
+                  <Save size={16} />
+                  {updatingStatus ? 'Saving...' : 'Save Updates'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

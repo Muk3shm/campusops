@@ -223,9 +223,8 @@ export async function createServiceRequest(data, currentUser) {
     try {
         const requestData = {
             ...data,
-            reportedBy:
-                currentUser?.email ||
-                'rahul@campus.edu'
+            reportedBy: currentUser?.email || null,
+            reporterName: currentUser?.name || currentUser?.email || null
         };
 
         const authHeaders = await getAuthHeaders();

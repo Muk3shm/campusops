@@ -96,7 +96,11 @@ export default function ServiceRequestsPage() {
             key: 'actions',
             label: 'Actions',
             render: (_, row) => {
-              const isOwner = row.reportedBy === user?.email;
+              const isOwner = Boolean(
+                (user?.sub && row.reporterSub === user.sub) ||
+                (user?.email && row.reportedBy === user.email) ||
+                (user?.id && row.reportedBy === user.id)
+              );
               const canEdit = isOwner && row.status === 'OPEN';
               if (!canEdit) return null;
               return (

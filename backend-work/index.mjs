@@ -304,8 +304,21 @@ export const handler = async (event) => {
             const newRequestId = `SR-${Date.now()}`;
             const now = new Date().toISOString();
 
-            // Securely assign identity from Cognito JWT claims
-            const reporterName = claims.name || claims["custom:name"] || body.reporterName || null;
+            // Security identity derived EXCLUSIVELY from authenticated JWT claims.sub
+            const callerSub = claims.sub || null;
+
+            // Display metadata fallback from JWT claims or client session parameters
+            const callerEmail =
+                claims.email ||
+                body.reportedBy ||
+                null;
+
+            const reporterName =
+                claims.name ||
+                claims["custom:name"] ||
+                body.reporterName ||
+                callerEmail ||
+                null;
 
             const request = {
                 requestId: newRequestId,
