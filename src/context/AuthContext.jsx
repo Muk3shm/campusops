@@ -1,5 +1,10 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getCurrentSessionUser, loginMock, logoutMock } from '@/services/api';
+import {
+  getCurrentCognitoSession,
+  loginCognito,
+  logoutCognito,
+  completeNewPasswordChallenge,
+} from '@/services/cognito';
 
 const AuthContext = createContext(null);
 
@@ -10,10 +15,15 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     async function loadSession() {
       try {
-        const sessionUser = await getCurrentSessionUser();
-        setUser(sessionUser);
+        const sessionData = await getCurrentCognitoSession();
+        if (sessionData && sessionData.user) {
+          setUser(sessionData.user);
+        } else {
+          setUser(null);
+        }
       } catch (err) {
-        console.error('Failed to load session:', err);
+        console.error('Failed to restore Cognito session:', err);
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -21,14 +31,27 @@ export function AuthProvider({ children }) {
     loadSession();
   }, []);
 
-  async function login(email, role) {
-    const loggedUser = await loginMock({ email, role });
-    setUser(loggedUser);
-    return loggedUser;
+  async function login(email, password) {
+    const result = await loginCognito(email, password);
+    if (result.status === 'SUCCESS') {
+      setUser(result.user);
+      return result.user;
+    }
+    // Return challenge result for NEW_PASSWORD_REQUIRED
+    return result;
+  }
+
+  async function completePasswordChallenge(cognitoUser, newPassword, userAttributes) {
+    const result = await completeNewPasswordChallenge(cognitoUser, newPassword, userAttributes);
+    if (result.status === 'SUCCESS') {
+      setUser(result.user);
+      return result.user;
+    }
+    return result;
   }
 
   async function logout() {
-    await logoutMock();
+    logoutCognito();
     setUser(null);
   }
 
@@ -37,6 +60,7 @@ export function AuthProvider({ children }) {
     loading,
     isAuthenticated: !!user,
     login,
+    completePasswordChallenge,
     logout,
   };
 

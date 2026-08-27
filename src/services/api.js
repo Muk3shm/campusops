@@ -7,6 +7,7 @@
 
 import { mockUsers, mockTechnicians, mockAdmins, defaultMockAccounts } from '@/data/mockUsers';
 import { mockArticles } from '@/data/mockKnowledgeBase';
+import { getAccessToken } from '@/services/cognito';
 
 const SESSION_KEY = 'campusops_mock_session';
 
@@ -17,6 +18,22 @@ export const MIN_RELEVANCE_THRESHOLD = 3;
 
 const delay = (ms = 150) => new Promise(resolve => setTimeout(resolve, ms));
 const API_URL = import.meta.env.VITE_API_URL;
+
+/**
+ * Centralized helper to obtain authorization headers containing the active Cognito access token.
+ * If no valid token exists, returns empty object to preserve compatibility with public API Gateway.
+ */
+export async function getAuthHeaders() {
+  try {
+    const token = await getAccessToken();
+    if (token) {
+      return { Authorization: `Bearer ${token}` };
+    }
+  } catch (err) {
+    console.error('Failed to get Cognito access token for API request:', err);
+  }
+  return {};
+}
 // ─── localStorage Helpers: Requests ─────────────────────────────
 
 // ─── localStorage Helpers: Knowledge Base ─────────────────────────
@@ -114,7 +131,12 @@ export async function logoutMock() {
 
 export async function getServiceRequests(user) {
     try {
-        const response = await fetch(`${API_URL}/requests`);
+        const authHeaders = await getAuthHeaders();
+        const response = await fetch(`${API_URL}/requests`, {
+            headers: {
+                ...authHeaders
+            }
+        });
 
         if (!response.ok) {
             throw new Error(`Failed to fetch service requests: ${response.status}`);
@@ -150,8 +172,14 @@ export async function getServiceRequests(user) {
 
 export async function getServiceRequestById(id) {
     try {
+        const authHeaders = await getAuthHeaders();
         const response = await fetch(
-            `${API_URL}/requests/${encodeURIComponent(id)}`
+            `${API_URL}/requests/${encodeURIComponent(id)}`,
+            {
+                headers: {
+                    ...authHeaders
+                }
+            }
         );
 
         if (response.status === 404) {
@@ -191,10 +219,12 @@ export async function createServiceRequest(data, currentUser) {
                 'rahul@campus.edu'
         };
 
+        const authHeaders = await getAuthHeaders();
         const response = await fetch(`${API_URL}/requests`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                ...authHeaders
             },
             body: JSON.stringify(requestData)
         });
@@ -257,12 +287,14 @@ export async function updateServiceRequest(requestId, data) {
         if (data.location !== undefined) body.location = data.location;
         if (data.priority !== undefined) body.priority = data.priority;
 
+        const authHeaders = await getAuthHeaders();
         const response = await fetch(
             `${API_URL}/requests/${encodeURIComponent(requestId)}`,
             {
                 method: 'PATCH',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    ...authHeaders
                 },
                 body: JSON.stringify(body)
             }
@@ -323,12 +355,14 @@ export async function updateServiceRequestStatus(
             body.resolutionNotes = resolutionNotes;
         }
 
+        const authHeaders = await getAuthHeaders();
         const response = await fetch(
             `${API_URL}/requests/${encodeURIComponent(id)}`,
             {
                 method: 'PATCH',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    ...authHeaders
                 },
                 body: JSON.stringify(body)
             }
@@ -388,12 +422,14 @@ export async function assignTechnicianToRequest(
             status: 'ASSIGNED'
         };
 
+        const authHeaders = await getAuthHeaders();
         const response = await fetch(
             `${API_URL}/requests/${encodeURIComponent(requestId)}`,
             {
                 method: 'PATCH',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    ...authHeaders
                 },
                 body: JSON.stringify(body)
             }
@@ -445,10 +481,14 @@ export async function assignTechnicianToRequest(
 
 export async function deleteServiceRequest(requestId) {
     try {
+        const authHeaders = await getAuthHeaders();
         const response = await fetch(
             `${API_URL}/requests/${encodeURIComponent(requestId)}`,
             {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    ...authHeaders
+                }
             }
         );
 
